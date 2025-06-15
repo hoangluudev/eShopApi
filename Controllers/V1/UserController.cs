@@ -1,20 +1,15 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using eShopApi.Data;
-using eShopApi.Models;
+using eShopApi.Models.Entities;
 
-namespace eShopApi.Controllers
+namespace eShopApi.Controllers.V1
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UserController : ControllerBase
+    public class UserController(ApplicationDbContext context) : ControllerBase
     {
-        private readonly DataContext _context;
-
-        public UserController(DataContext context)
-        {
-            _context = context;
-        }
+        private readonly ApplicationDbContext _context = context;
 
         [HttpGet]
         public async Task<ActionResult<List<User>>> GetAllUsers()
@@ -24,7 +19,7 @@ namespace eShopApi.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<List<User>>> GetUser(int id)
+        public async Task<ActionResult<List<User>>> GetUser([FromRoute] int id)
         {
             var user = await _context.Users.FindAsync(id);
             if (user is null)
@@ -36,18 +31,18 @@ namespace eShopApi.Controllers
 
 
         [HttpPost]
-        public async Task<ActionResult<List<User>>> CreateUser(User requestContext)
+        public async Task<ActionResult<List<User>>> CreateUser([FromBody] User requestContext)
         {
-            _context.Users.Add(requestContext);          
+            _context.Users.Add(requestContext);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetUser), new { id = requestContext.UserId }, requestContext);
         }
 
-        [HttpPut]
-        public async Task<ActionResult<List<User>>> UpdateUser(User requestContext)
+        [HttpPut("{id}")]
+        public async Task<ActionResult<List<User>>> UpdateUser([FromRoute] int id, [FromBody] User requestContext)
         {
-            var user = await _context.Users.FindAsync(requestContext.UserId);
+            var user = await _context.Users.FindAsync(id);
             if (user is null)
             {
                 return NotFound("User not found");
@@ -63,7 +58,7 @@ namespace eShopApi.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<ActionResult<List<User>>> DeleteUser(int id)
+        public async Task<ActionResult<List<User>>> DeleteUser([FromRoute] int id)
         {
             var user = await _context.Users.FindAsync(id);
             if (user is null)
